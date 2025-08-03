@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Jogo do Bicho - Mobile</title>
+<style>
+  /* Reset básico */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  main {
+    background-color: #222;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  h1 {
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    letter-spacing: 1.5px;
+  }
+  label {
+    display: block;
+    margin: 12px 0 6px;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+  select, input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 14px 12px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+  }
+  input[type="number"]::-webkit-inner-spin-button, 
+  input[type="number"]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+  }
+  button {
+    margin-top: 25px;
+    width: 100%;
+    padding: 16px 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-radius: 12px;
+    border: none;
+    background-color: #5ee432;
+    color: #111;
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+  }
+  button:hover {
+    background-color: #3ec70b;
+  }
+  .saldo, .result {
+    margin-top: 20px;
+    background-color: #333;
+    border-radius: 10px;
+    padding: 15px;
+    font-size: 1.2rem;
+    min-height: 70px;
+  }
+  .win {
+    color: #00ff6a;
+    font-weight: 700;
+  }
+  .lose {
+    color: #ff3864;
+    font-weight: 700;
+  }
+  .history {
+    margin-top: 30px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #111;
+    padding: 12px;
+    border-radius: 10px;
+  }
+  .history h2 {
+    font-size: 1.3rem;
+    margin-top: 0;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .history ul {
+    list-style: none;
+    padding-left: 0;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .history li {
+    border-bottom: 1px solid #444;
+    padding: 8px 0;
+    font-size: 1rem;
+  }
+  .history li span {
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Jogo do Bicho</h1>
+
+  <div class="saldo" id="saldo">Saldo atual: R$ 100,00</div>
+
+  <label for="animal">Escolha o bicho:</label>
+  <select id="animal">
+    <option value="1">Avestruz (01-04)</option>
+    <option value="2">Águia (05-08)</option>
+    <option value="3">Burro (09-12)</option>
+    <option value="4">Borboleta (13-16)</option>
+    <option value="5">Cachorro (17-20)</option>
+    <option value="6">Cabra (21-24)</option>
+    <option value="7">Carneiro (25-28)</option>
+    <option value="8">Camelo (29-32)</option>
+    <option value="9">Cobra (33-36)</option>
+    <option value="10">Coelho (37-40)</option>
+    <option value="11">Cavalo (41-44)</option>
+    <option value="12">Elefante (45-48)</option>
+    <option value="13">Galo (49-52)</option>
+    <option value="14">Gato (53-56)</option>
+    <option value="15">Jacaré (57-60)</option>
+    <option value="16">Leão (61-64)</option>
+    <option value="17">Macaco (65-68)</option>
+    <option value="18">Porco (69-72)</option>
+    <option value="19">Pavão (73-76)</option>
+    <option value="20">Peru (77-80)</option>
+    <option value="21">Touro (81-84)</option>
+    <option value="22">Tigre (85-88)</option>
+    <option value="23">Urso (89-92)</option>
+    <option value="24">Veado (93-96)</option>
+    <option value="25">Vaca (97-00)</option>
+  </select>
+
+  <label for="number">Ou escolha um número (01-00):</label>
+  <input type="text" id="number" maxlength="2" placeholder="Ex: 23" />
+
+  <label for="bet">Valor da aposta (R$):</label>
+  <input type="number" id="bet" min="1" placeholder="Digite um valor válido" />
+
+  <button id="btnJogar">Sortear</button>
+
+  <div class="result" id="resultado"></div>
+
+  <section class="history" id="historySection" style="display:none;">
+    <h2>Histórico de Resultados</h2>
+    <ul id="historyList"></ul>
+  </section>
+</main>
+
+<script>
+  let saldo = 100.00;
+  const saldoDiv = document.getElementById('saldo');
+  const resultadoDiv = document.getElementById('resultado');
+  const historySection = document.getElementById('historySection');
+  const historyList = document.getElementById('historyList');
+  const btnJogar = document.getElementById('btnJogar');
+
+  function animalPorNumero(num) {
+    if(num === 0) num = 100;
+    for(let i=1; i<=25; i++) {
+      let inicio = (i - 1) * 4 + 1;
+      let fim = i * 4;
+      if(num >= inicio && num <= fim) return i;
+    }
+    return null;
+  }
+
+  function nomeAnimal(id) {
+    const animais = [
+      "Avestruz", "Águia", "Burro", "Borboleta", "Cachorro",
+      "Cabra", "Carneiro", "Camelo", "Cobra", "Coelho",
+      "Cavalo", "Elefante", "Galo", "Gato", "Jacaré",
+      "Leão", "Macaco", "Porco", "Pavão", "Peru",
+      "Touro", "Tigre", "Urso", "Veado", "Vaca"
+    ];
+    return animais[id-1] || "Desconhecido";
+  }
+
+  function atualizarSaldo() {
+    saldoDiv.textContent = `Saldo atual: R$ ${saldo.toFixed(2)}`;
+  }
+
+  function adicionarHistorico(texto, ganhou) {
+    const li = document.createElement('li');
+    li.innerHTML = texto;
+    li.className = ganhou ? 'win' : 'lose';
+    historyList.prepend(li);
+    historySection.style.display = 'block';
+  }
+
+  btnJogar.addEventListener('click', () => {
+    const animalSelect = parseInt(document.getElementById('animal').value);
+    const numberInput = document.getElementById('number').value.trim();
+    const betInput = document.getElementById('bet').value.trim();
+
+    resultadoDiv.textContent = '';
+
+    if(betInput === '' || isNaN(betInput) || Number(betInput) <= 0) {
+      resultadoDiv.innerHTML = '<span class="lose">Informe um valor válido para apostar!</span>';
+      return;
+    }
+    const apostaValor = Number(betInput);
+
+    if(apostaValor > saldo) {
+      resultadoDiv.innerHTML = '<span class="lose">Saldo insuficiente para essa aposta.</span>';
+      return;
+    }
+
+    let apostaNumero = null;
+    if(numberInput !== "") {
+      let num = parseInt(numberInput, 10);
+      if(isNaN(num) || num < 0 || num > 100) {
+        resultadoDiv.innerHTML = '<span class="lose">Número inválido! Escolha entre 01 e 00 (00 = 100).</span>';
+        return;
+      }
+      apostaNumero = num === 0 ? 100 : num;
+    }
+
+    const sorteado = Math.floor(Math.random() * 100) + 1;
+    const animalSorteado = animalPorNumero(sorteado);
+
+    let textoResultado = `Número sorteado: <strong>${sorteado.toString().padStart(2,'0')}</strong> - Animal sorteado: <strong>${nomeAnimal(animalSorteado)}</strong><br>`;
+
+    let ganhou = false;
+
+    if(apostaNumero !== null) {
+      if(apostaNumero === sorteado) {
+        const ganho = apostaValor * 20;
+        saldo += ganho;
+        textoResultado += `<span class="win">Parabéns! Você acertou o número e ganhou R$ ${ganho.toFixed(2)}!</span>`;
+        ganhou = true;
+      } else {
+        saldo -= apostaValor;
+        textoResultado += `<span class="lose">Você perdeu R$ ${apostaValor.toFixed(2)}. Tente novamente!</span>`;
+      }
+    } else {
+      if(animalSelect === animalSorteado) {
+        const ganho = apostaValor * 4;
+        saldo += ganho;
+        textoResultado += `<span class="win">Parabéns! Você acertou o bicho e ganhou R$ ${ganho.toFixed(2)}!</span>`;
+        ganhou = true;
+      } else {
+        saldo -= apostaValor;
+        textoResultado += `<span class="lose">Você perdeu R$ ${apostaValor.toFixed(2)}. Tente novamente!</span>`;
+      }
+    }
+
+    atualizarSaldo();
+    resultadoDiv.innerHTML = textoResultado;
+
+    const tipoAposta = apostaNumero !== null ? `Número ${apostaNumero.toString().padStart(2,'0')}` : `Animal ${nomeAnimal(animalSelect)}`;
+    const historicoTexto = `[${new Date().toLocaleTimeString()}] Aposta: ${tipoAposta} - Valor: R$ ${apostaValor.toFixed(2)} - Resultado: ${ganhou ? 'Ganhou' : 'Perdeu'}`;
+    adicionarHistorico(historicoTexto, ganhou);
+
+    document.getElementById('number').value = '';
+    document.getElementById('bet').value = '';
+  });
+
+  atualizarSaldo();
+</script>
+</body>
+</html>
